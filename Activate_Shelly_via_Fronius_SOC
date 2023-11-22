@@ -1,8 +1,8 @@
 //V1.0 created by Regenschein
 //Date: 21.11.2023
 
-let SOC_Start = 15; //Einschalten, wenn SOC %-Wert erreicht
-let SOC_End = 10; //Ausschalten, wenn SOC unter % fällt
+let SOC_Start = 95; //Einschalten, wenn SOC %-Wert erreicht
+let SOC_End = 80; //Ausschalten, wenn SOC unter % fällt
 let URL_PV = "http://10.0.0.9/solar_api/v1/GetPowerFlowRealtimeData.fcgi"; // IP Wechselrichter
 
 //Variablendefiniton
