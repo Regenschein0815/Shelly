@@ -1,0 +1,72 @@
+//V1.0 created by Regenschein
+//Date: 21.11.2023
+
+let SOC_Start = 15; //Einschalten, wenn SOC %-Wert erreicht
+let SOC_End = 10; //Ausschalten, wenn SOC unter % fällt
+let URL_PV = "http://10.0.0.9/solar_api/v1/GetPowerFlowRealtimeData.fcgi"; // IP Wechselrichter
+
+//Variablendefiniton
+let my_Json = "0";
+let my_SOC = 50; //aktueller Batterieladestand
+let my_retired_SOC = 50; //Batterieladestand vorige Messung
+let SOC_increase = false; //Speicher wird geladen?
+let my_P_Akku = 0; //Entladeleistung, negativ = Ladung Akku
+let my_P_Grid = 0; //Überschussleistung, negativ = Netzbezug
+let my_P_Load = 0; //Stromverbrauch, immer negativ
+let my_P_PV = 0; //Generatorleistung
+
+ 
+ 
+ function timerCode() {
+ //Werte vom Wechselrichter auslesen:
+ 
+  Shelly.call(
+    "HTTP.GET", {
+      "url": URL_PV,
+     
+    },
+      function(result) {
+    
+       my_Json = JSON.parse(result.body);
+         my_SOC = my_Json.Body.Data.Inverters[1].SOC,
+         my_P_Akku = my_Json.Body.Data.Site.P_Akku,
+         my_P_Grid = my_Json.Body.Data.Site.P_Grid,
+         my_P_Load = my_Json.Body.Data.Site.P_Load,
+         my_P_PV = my_Json.Body.Data.Site.P_PV;
+         
+         
+         //SOC steigend oder fallend?
+         if(my_SOC>my_retired_SOC){
+           SOC_increase = true
+         }
+         else{
+           SOC_increase = false
+         }
+         
+         //Ausgang schalten, je nach Bedingung: id 0 oder 1, je nach Ausgang.
+         if(SOC_increase && my_SOC>SOC_Start) {
+           Shelly.call("Switch.set", {'id': 1, 'on': true});
+           //nur Zur kontrolle print("einschalten");
+         }
+         if(!SOC_increase && my_SOC<SOC_End) {
+           Shelly.call("Switch.set", {'id': 1, 'on': false});
+          //nur zur Kontrolle print("ausschalten");
+
+         }   
+         
+         //SOC-Stand für nächste Messung speichern
+         my_retired_SOC = my_SOC;
+ 
+     }     
+     
+    )
+
+    
+}
+
+
+Timer.set(
+  /* number of miliseconds */ 60000,
+  /* repeat? */ true,
+  /* callback */ timerCode
+);
