@@ -1,7 +1,7 @@
 //V1.0 created by Regenschein
 //Date: 21.11.2023
 
-let SOC_Start = 95; //Einschalten, wenn SOC %-Wert erreicht
+let SOC_Start = 90; //Einschalten, wenn SOC %-Wert erreicht
 let SOC_End = 80; //Ausschalten, wenn SOC unter % fällt
 let URL_PV = "http://10.0.0.9/solar_api/v1/GetPowerFlowRealtimeData.fcgi"; // IP Wechselrichter
 
@@ -26,15 +26,18 @@ let my_P_PV = 0; //Generatorleistung
      
     },
       function(result) {
-    
+    //Ueberpruefung ob Wechselrichter erreichbar:
+    if (result && result.code){
        my_Json = JSON.parse(result.body);
          my_SOC = my_Json.Body.Data.Inverters[1].SOC,
          my_P_Akku = my_Json.Body.Data.Site.P_Akku,
          my_P_Grid = my_Json.Body.Data.Site.P_Grid,
          my_P_Load = my_Json.Body.Data.Site.P_Load,
          my_P_PV = my_Json.Body.Data.Site.P_PV;
-         
-         
+         }
+    else {
+      print("error: request failed")
+      }
          //SOC steigend oder fallend?
          if(my_SOC>my_retired_SOC){
            SOC_increase = true
@@ -45,16 +48,19 @@ let my_P_PV = 0; //Generatorleistung
          
          //Ausgang schalten, je nach Bedingung: id 0 oder 1, je nach Ausgang.
          if(SOC_increase && my_SOC>SOC_Start) {
-           Shelly.call("Switch.set", {'id': 1, 'on': true});
-           //nur Zur kontrolle print("einschalten");
+           Shelly.call("Switch.set", {'id': 0, 'on': true});
+           //nur Zur kontrolle
+           print("einschalten");
          }
          if(!SOC_increase && my_SOC<SOC_End) {
-           Shelly.call("Switch.set", {'id': 1, 'on': false});
-          //nur zur Kontrolle print("ausschalten");
+           Shelly.call("Switch.set", {'id': 0, 'on': false});
+          //nur zur Kontrolle
+          print("ausschalten");
 
          }   
          
          //SOC-Stand für nächste Messung speichern
+         print(my_SOC);
          my_retired_SOC = my_SOC;
  
      }     
